@@ -27,9 +27,61 @@ const añadirCardGif = (giphy) => {
   // añade el elemento creado y su contenido al DOM
   document.querySelector(".grid").appendChild(contenedor);
 };
-const prevent = (e) =>{
+const prevent = (e) => {
     e.preventDefault();
     buscar();
+}
+
+const sinresultados= () =>{
+    imprimirhistorial ();
+}
+
+const imprimirhistorial = () =>{
+    limpiarrecientes();
+    const contenthistory = document.createElement("ul");
+    contenthistory.className = "listarecientes";
+    const historial1 = document.createElement("li");
+    const historial2 = document.createElement("li");
+    const historial3 = document.createElement("li");
+
+    const hi1 = document.createElement("a");
+    hi1.innerText = localStorage.getItem("recent1");
+    hi1.addEventListener("click", buscarhistorico);
+    const hi2 = document.createElement("a");
+    hi2.innerText = localStorage.getItem("recent2");
+    hi2.addEventListener("click", buscarhistorico);
+    const hi3 = document.createElement("a");
+    hi3.innerText = localStorage.getItem("recent3");
+    hi3.addEventListener("click", buscarhistorico);
+
+    historial1.appendChild(hi1);
+    historial2.appendChild(hi2);
+    historial3.appendChild(hi3);
+
+    contenthistory.appendChild(historial1);
+    contenthistory.appendChild(historial2);
+    contenthistory.appendChild(historial3);
+
+    document.querySelector(".historia").appendChild(contenthistory);
+
+    console.log(hi1.innerText);
+}
+
+const buscarhistorico = async function(e){
+    console.log(e.target.innerText);
+    limpiar ();
+    const ruta = `${APIGifSearch}&q=${e.target.innerText}`;
+    const {data: gifo} = await obtenerGif(ruta);
+    if(gifo.length === 0){
+        alert ('No se han encontrado resultados');
+        sinresultados();
+        return;
+    }
+    imprimirhistorial ();
+    console.log(gifo);
+    for (let giphy of gifo) {
+        añadirCardGif(giphy);
+    }
 }
 
 const modificarlocalstorage = () =>{
@@ -60,7 +112,6 @@ const modificarlocalstorage2 = () =>{
         mod2 = mod3;
         localStorage.setItem("recent2", mod2);
 }
-
 
 const guardarconsola = () =>{
     if (localStorage.length === 4){
@@ -96,8 +147,10 @@ const buscar = async function () {
     const {data: gifo} = await obtenerGif(ruta);
     if(gifo.length === 0){
         alert ('No se han encontrado resultados');
+        sinresultados();
         return;
     }
+    imprimirhistorial ();
     console.log(gifo);
     for (let giphy of gifo) {
         añadirCardGif(giphy);
@@ -116,6 +169,10 @@ const obtenerGif = async function (url) {
 const limpiar = () => {
   document.querySelector(".grid").innerHTML = "";
 };
+const limpiarrecientes = () => {
+    document.querySelector(".historia").innerHTML = "";
+  };
+  
 
 const cargar = async (url) => {
   const giphys = await obtenerGif(url);
@@ -128,3 +185,4 @@ const cargar = async (url) => {
 form.addEventListener('submit', prevent);
 cargar(APITrending);
 boton.addEventListener('click', buscar);
+imprimirhistorial();

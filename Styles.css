@@ -66,6 +66,16 @@ button:focus {
 	padding: 15px;
 }
 
+.historia {
+	color: whitesmoke;
+	width: 100%;
+	height: 100%;
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	grid-gap: 15px;
+	padding: 15px;
+}
+
 @media (max-width: 800px) {
 	.grid {
 		grid-template-columns: repeat(2, 1fr);
