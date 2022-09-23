@@ -9,8 +9,13 @@ const APIGifSearch = "https://api.giphy.com/v1/gifs/search?api_key=e1mozwZEVA7bZ
 //Traer elementos de html
 const boton = document.querySelector('#boton');
 const form = document.querySelector("#formulario");
+const finish = document.querySelector(".final");
 
+let offsets = 0;
+let offtrends = 9;
+let offsearch = 9;
 let recientes = 0;
+let observador;
 
 const añadirCardGif = (giphy) => {
   // crea un nuevo div y añade contenido
@@ -18,15 +23,47 @@ const añadirCardGif = (giphy) => {
   contenedor.className = "cards";
   const contenido = document.createElement("p");
   contenido.className = "Autor";
-  contenido.innerText = "Subido por: " + giphy.username; 
+  contenido.innerText = "Subido por: " + (giphy.username.trim() || "Desconocido"); 
   const contenedorImagen = document.createElement("img");
   contenedorImagen.src = giphy.images.original.webp;
+  contenedorImagen.alt = giphy.title.trim() || "Desconocido";
 
   contenedor.appendChild(contenido); //añade texto al div creado.
   contenedor.appendChild(contenedorImagen);
   // añade el elemento creado y su contenido al DOM
   document.querySelector(".grid").appendChild(contenedor);
 };
+
+const inicioScroll = () =>{
+    const Iobservador = new IntersectionObserver(entradas => {
+        console.log("entro al observador");
+        if(entradas[0].IntersectionRatio <= 0){
+            return;
+        }
+        console.log("entro al ciclo")
+        offsets += offtrends;
+        const link = `${APITrending}&offset=${offsets}`
+        console.log(link)
+        cargar (link);
+    });
+    Iobservador.observe(finish);
+    return Iobservador;
+}
+const inicioScrollsearch = (ruta) =>{ 
+    const Iobservador = new IntersectionObserver(entradas => {
+        console.log("entro al observador");
+        if(entradas[0].IntersectionRatio <= 0){
+            return;
+        }
+        console.log("entro al ciclo")
+        offsets += offsearch;
+        let link = `${ruta}&offset=${offsets}`
+        console.log(link)
+        cargar (link);
+    });
+    Iobservador.observe(finish);
+    return Iobservador;
+}
 const prevent = (e) => {
     e.preventDefault();
     buscar();
@@ -47,12 +84,15 @@ const imprimirhistorial = () =>{
     const hi1 = document.createElement("a");
     hi1.innerText = localStorage.getItem("recent1");
     hi1.addEventListener("click", buscarhistorico);
+    hi1.className = "recientes";
     const hi2 = document.createElement("a");
     hi2.innerText = localStorage.getItem("recent2");
     hi2.addEventListener("click", buscarhistorico);
+    hi2.className = "recientes";
     const hi3 = document.createElement("a");
     hi3.innerText = localStorage.getItem("recent3");
     hi3.addEventListener("click", buscarhistorico);
+    hi3.className = "recientes";
 
     historial1.appendChild(hi1);
     historial2.appendChild(hi2);
@@ -63,13 +103,13 @@ const imprimirhistorial = () =>{
     contenthistory.appendChild(historial3);
 
     document.querySelector(".historia").appendChild(contenthistory);
-
-    console.log(hi1.innerText);
 }
 
 const buscarhistorico = async function(e){
     console.log(e.target.innerText);
     limpiar ();
+    observador.unobserve(finish);
+    offsets = 0;
     const ruta = `${APIGifSearch}&q=${e.target.innerText}`;
     const {data: gifo} = await obtenerGif(ruta);
     if(gifo.length === 0){
@@ -82,6 +122,7 @@ const buscarhistorico = async function(e){
     for (let giphy of gifo) {
         añadirCardGif(giphy);
     }
+    observador = inicioScrollsearch(ruta);
 }
 
 const modificarlocalstorage = () =>{
@@ -140,10 +181,12 @@ const buscar = async function () {
         return;
     }
     limpiar();
+    observador.unobserve(finish);
     console.log(entrada);
     recientes = entrada;
     guardarconsola();
-    const ruta = `${APIGifSearch}&q=${entrada}`;
+    offsets = 0;
+    let ruta = `${APIGifSearch}&q=${entrada}`;
     const {data: gifo} = await obtenerGif(ruta);
     if(gifo.length === 0){
         alert ('No se han encontrado resultados');
@@ -155,34 +198,35 @@ const buscar = async function () {
     for (let giphy of gifo) {
         añadirCardGif(giphy);
     }
+    observador = inicioScrollsearch(ruta);
 
-};
+}
   
 // }
 const obtenerGif = async function (url) {
   const respuesta = await fetch(url);
   const giphys = await respuesta.json();
   return giphys;
-};
+}
 
 
 const limpiar = () => {
   document.querySelector(".grid").innerHTML = "";
-};
+}
 const limpiarrecientes = () => {
     document.querySelector(".historia").innerHTML = "";
-  };
-  
+}
 
 const cargar = async (url) => {
   const giphys = await obtenerGif(url);
   for (let giphy of giphys.data) {
     añadirCardGif(giphy);
-  }
-
+    
+    }
 };
 
 form.addEventListener('submit', prevent);
 cargar(APITrending);
 boton.addEventListener('click', buscar);
 imprimirhistorial();
+observador = inicioScroll();
